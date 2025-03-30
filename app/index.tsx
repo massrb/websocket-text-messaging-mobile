@@ -5,18 +5,41 @@ import React, { useEffect, useState, useRef } from "react";
 
 export default function App() {
   const [wsUrl, setWsUrl] = useState("ws://localhost:3000/cable"); // State for WebSocket URL
+  const [debouncedWsUrl, setDebouncedWsUrl] = useState(wsUrl); 
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [serverMessages, setServerMessages] = useState([]);
   const [message, setMessage] = useState(""); // state for input text
   const ws = useRef<WebSocket | null>(null); // perdsist websocket 
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!wsUrl) return;
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current); // Clear previous timer if the user types again
+    }
 
-    ws.current = new WebSocket(wsUrl);
+    debounceTimer.current = setTimeout(() => {
+      console.log(`🔄 Setting debounced WebSocket URL: ${wsUrl}`);
+      setDebouncedWsUrl(wsUrl); // Set the debounced URL after delay
+    }, 2000); // Wait 2 seconds before updating URL
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [wsUrl]); // Runs whenever `wsUrl` changes
+
+  useEffect(() => {
+    if (!debouncedWsUrl) return;
+    
+    if (ws.current) {
+      ws.current.close();
+    }
+
+    ws.current = new WebSocket(debouncedWsUrl);
 
     ws.current.onopen = () => {
-      console.log("WebSocket connection opened");
+      console.log("✅ WebSocket Connected to:", debouncedWsUrl);
       // to send message you can use like that :   ws.send("Hello, server!"); 
       setIsConnected(true); // Update state to reflect successful connection
       const subscribeMessage = {
@@ -37,12 +60,13 @@ export default function App() {
     };
 
     ws.current.onerror = (e) => {
-      console.log("WebSocket error:", e);
+      // console.log("WebSocket error:", e);
+      console.error("❌ Err:", e.message, e);
       setIsConnected(false); // Update state if there is an error
     };
 
     ws.current.onclose = (e) => {
-      console.log("WebSocket connection closed:", e.code, e.reason);
+      console.log("React-Native WebSocket connection closed:", e.code, e.reason);
       setIsConnected(false); // Update state if the connection closes
     };
 
@@ -50,7 +74,7 @@ export default function App() {
     return () => {
       ws.current?.close();
     };
-  }, []);
+  },[debouncedWsUrl]);
 
   const sendMessage = () => {
     console.log('in sendMessage()')
@@ -79,7 +103,7 @@ export default function App() {
         }}
         placeholder="Enter WebSocket URL..."
         value={wsUrl}
-        onChangeText={setWsUrl}
+        onChangeText={(text) => setWsUrl(text)}
       />
       <Text style={{ color: "blue" }}>
         {isConnected ? "Connected to WebSocket" : `Not connected to WebSocket at ${wsUrl}`}
