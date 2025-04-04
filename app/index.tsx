@@ -4,8 +4,9 @@ import { View, Text, TextInput, Button } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
 
 export default function App() {
-  const [wsUrl, setWsUrl] = useState("ws://localhost:3000/cable"); // State for WebSocket URL
-  const [debouncedWsUrl, setDebouncedWsUrl] = useState(wsUrl); 
+  const [wsIp, setWsIp] = useState("192.168.1.243"); // State for WebSocket URL
+  const [debouncedWsIp, setDebouncedWsIp] = useState(wsIp);
+  const [wsUrl, setWsUrl] = useState('')
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [serverMessages, setServerMessages] = useState([]);
   const [message, setMessage] = useState(""); // state for input text
@@ -18,8 +19,8 @@ export default function App() {
     }
 
     debounceTimer.current = setTimeout(() => {
-      console.log(`🔄 Setting debounced WebSocket URL: ${wsUrl}`);
-      setDebouncedWsUrl(wsUrl); // Set the debounced URL after delay
+      console.log(`🔄 Setting debounced WebSocket IP: ${wsIp}`);
+      setDebouncedWsIp(wsIp); // Set the debounced URL after delay
     }, 2000); // Wait 2 seconds before updating URL
 
     return () => {
@@ -27,19 +28,21 @@ export default function App() {
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [wsUrl]); // Runs whenever `wsUrl` changes
+  }, [wsIp]); // Runs whenever `wsIp` changes
 
   useEffect(() => {
-    if (!debouncedWsUrl) return;
+    if (!debouncedWsIp) return;
     
     if (ws.current) {
       ws.current.close();
     }
 
-    ws.current = new WebSocket(debouncedWsUrl);
+    setWsUrl(`ws://${debouncedWsIp}:3000/cable`)
+    console.log(`Set websocket to ${wsUrl}`)
+    ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
-      console.log("✅ WebSocket Connected to:", debouncedWsUrl);
+      console.log("✅ WebSocket Connected to:", debouncedWsIp);
       // to send message you can use like that :   ws.send("Hello, server!"); 
       setIsConnected(true); // Update state to reflect successful connection
       const subscribeMessage = {
@@ -60,7 +63,7 @@ export default function App() {
     };
 
     ws.current.onerror = (e) => {
-      // console.log("WebSocket error:", e);
+      console.log("WebSocket error on URL:", wsUrl);
       console.error("❌ Err:", e.message, e);
       setIsConnected(false); // Update state if there is an error
     };
@@ -74,7 +77,7 @@ export default function App() {
     return () => {
       ws.current?.close();
     };
-  },[debouncedWsUrl]);
+  },[debouncedWsIp]);
 
   const sendMessage = () => {
     console.log('in sendMessage()')
@@ -100,13 +103,14 @@ export default function App() {
           borderWidth: 1,
           marginBottom: 10,
           paddingHorizontal: 10,
+          fontSize: 20
         }}
         placeholder="Enter WebSocket URL..."
-        value={wsUrl}
-        onChangeText={(text) => setWsUrl(text)}
+        value={wsIp}
+        onChangeText={(text) => setWsIp(text)}
       />
-      <Text style={{ color: "blue" }}>
-        {isConnected ? "Connected to WebSocket" : `Not connected to WebSocket at ${wsUrl}`}
+      <Text style={{ color: "blue", fontSize: 20 }}>
+        {isConnected ? "Connected to WebSocket" : `Not connected to WebSocket at ${wsIp}`}
       </Text>
       {(serverMessages.length > 0) ? (
         <>
