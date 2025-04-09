@@ -5,44 +5,25 @@ import React, { useEffect, useState, useRef } from "react";
 
 export default function App() {
   const [wsIp, setWsIp] = useState("192.168.1.243"); // State for WebSocket URL
-  const [debouncedWsIp, setDebouncedWsIp] = useState(wsIp);
-  const [wsUrl, setWsUrl] = useState('')
+  // const [wsUrl, setWsUrl] = useState('')
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [serverMessages, setServerMessages] = useState([]);
   const [message, setMessage] = useState(""); // state for input text
   const ws = useRef<WebSocket | null>(null); // perdsist websocket 
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current); // Clear previous timer if the user types again
-    }
-
-    debounceTimer.current = setTimeout(() => {
-      console.log(`🔄 Setting debounced WebSocket IP: ${wsIp}`);
-      setDebouncedWsIp(wsIp); // Set the debounced URL after delay
-    }, 2000); // Wait 2 seconds before updating URL
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [wsIp]); // Runs whenever `wsIp` changes
-
-  useEffect(() => {
-    if (!debouncedWsIp) return;
+  const connectToSocket = () => {
     
     if (ws.current) {
       ws.current.close();
     }
 
-    setWsUrl(`ws://${debouncedWsIp}:3000/cable`)
+    let wsUrl = `ws://${wsIp}:3000/cable`
     console.log(`Set websocket to ${wsUrl}`)
     ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
-      console.log("✅ WebSocket Connected to:", debouncedWsIp);
+      console.log("✅ WebSocket Connected to:", wsIp);
       // to send message you can use like that :   ws.send("Hello, server!"); 
       setIsConnected(true); // Update state to reflect successful connection
       const subscribeMessage = {
@@ -77,7 +58,7 @@ export default function App() {
     return () => {
       ws.current?.close();
     };
-  },[debouncedWsIp]);
+  };
 
   const sendMessage = () => {
     console.log('in sendMessage()')
@@ -108,7 +89,9 @@ export default function App() {
         placeholder="Enter WebSocket URL..."
         value={wsIp}
         onChangeText={(text) => setWsIp(text)}
+        onSubmitEditing={connectToSocket}
       />
+      <Button title="Connect" onPress={connectToSocket} />
       <Text style={{ color: "blue", fontSize: 20 }}>
         {isConnected ? "Connected to WebSocket" : `Not connected to WebSocket at ${wsIp}`}
       </Text>
