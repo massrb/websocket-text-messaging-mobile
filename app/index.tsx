@@ -38,14 +38,23 @@ export default function App() {
       let obj = JSON.parse(e.data)
       if (obj?.type != 'ping') {
         let content = obj?.message?.content
-        console.log(obj)
+        console.log("Websocket message", obj)
         setServerMessages((prevMessages) => [...prevMessages.slice(-9), content])
       }
     };
 
     ws.current.onerror = (e) => {
       console.log("WebSocket error on URL:", wsUrl);
-      console.error("❌ Err:", e.message, e);
+      console.error("❌ websocket Err:", e.message, e);
+      if (typeof e.message === 'string') {
+        console.log("Websocket Error message:", e.message);
+      } else {
+       try {
+         console.log("Websocket Full error (stringified):", JSON.stringify(e));
+       } catch (_) {
+        console.log("Couldn't stringify the WebSocket error", e);
+       }
+      }
       setIsConnected(false); // Update state if there is an error
     };
 
@@ -93,7 +102,7 @@ export default function App() {
       />
       <Button title="Connect" onPress={connectToSocket} />
       <Text style={{ color: "blue", fontSize: 20 }}>
-        {isConnected ? "Connected to WebSocket" : `Not connected to WebSocket at ${wsIp}`}
+        {isConnected ? "Connected to WebSocket" : `Not connected to ${wsIp} port 3000`}
       </Text>
       {(serverMessages.length > 0) ? (
         <>
