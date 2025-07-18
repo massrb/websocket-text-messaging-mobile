@@ -4,6 +4,7 @@ import { View, Text, TextInput, Button } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
 
 export default function App() {
+  // for local use: useState("192.168.1.243");
   const [wsIp, setWsIp] = useState("https://websocket-server-gjg0.onrender.com"); // State for WebSocket URL
   // const [wsUrl, setWsUrl] = useState('')
   const [isConnected, setIsConnected] = useState<boolean>(false);
