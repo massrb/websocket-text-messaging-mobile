@@ -4,7 +4,7 @@ import { View, Text, TextInput, Button } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
 
 export default function App() {
-  const [wsIp, setWsIp] = useState("192.168.1.243"); // State for WebSocket URL
+  const [wsIp, setWsIp] = useState("https://websocket-server-gjg0.onrender.com"); // State for WebSocket URL
   // const [wsUrl, setWsUrl] = useState('')
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [serverMessages, setServerMessages] = useState([]);
@@ -18,7 +18,7 @@ export default function App() {
       ws.current.close();
     }
 
-    let wsUrl = `ws://${wsIp}:3000/cable`
+    let wsUrl = `ws://${wsIp}/cable`
     console.log(`Set websocket to ${wsUrl}`)
     ws.current = new WebSocket(wsUrl);
 
@@ -102,7 +102,7 @@ export default function App() {
       />
       <Button title="Connect" onPress={connectToSocket} />
       <Text style={{ color: "blue", fontSize: 20 }}>
-        {isConnected ? "Connected to WebSocket" : `Not connected to ${wsIp} port 3000`}
+        {isConnected ? "Connected to WebSocket" : `Not connected to ${wsIp}`}
       </Text>
       {(serverMessages.length > 0) ? (
         <>
