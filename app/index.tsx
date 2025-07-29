@@ -2,11 +2,13 @@
 
 import { View, Text, TextInput, Button } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
+import { parseDocument } from "htmlparser2";
+import { DomUtils } from "htmlparser2";
 
 export default function App() {
   // for local use: useState("192.168.1.243");
-  const [wsIp, setWsIp] = useState("https://websocket-server-gjg0.onrender.com"); // State for WebSocket URL
-  // const [wsUrl, setWsUrl] = useState('')
+  const [wsIp, setWsIp] = useState("192.168.1.243");
+  // const [wsIp, setWsIp] = useState("websocket-server-gjg0.onrender.com"); // State for WebSocket URL
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [serverMessages, setServerMessages] = useState([]);
   const [message, setMessage] = useState(""); // state for input text
@@ -37,10 +39,18 @@ export default function App() {
 
     ws.current.onmessage = (e) => {
       let obj = JSON.parse(e.data)
+      console.log("Websocket message", obj)
       if (obj?.type != 'ping') {
-        let content = obj?.message?.content
-        console.log("Websocket message", obj)
-        setServerMessages((prevMessages) => [...prevMessages.slice(-9), content])
+        let htmlString = obj?.message?.content;
+        console.log('Websocket html', htmlString)
+        if (htmlString) {
+          console.log("Websocket parse HTML:", htmlString);
+          const doc = parseDocument(htmlString);
+          const pElement = DomUtils.findOne(el => el.name === "p", doc.children);
+          const pText = DomUtils.textContent(pElement)?.trim();
+          console.log("Websocket text:", pText);
+          setServerMessages((prevMessages) => [...prevMessages.slice(-9), pText]);
+        }
       }
     };
 
